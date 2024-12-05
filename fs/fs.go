@@ -188,6 +188,7 @@ func NewFilesystem(root string, cfg config.Config, opts ...Option) (_ snapshot.F
 		metricsController:     c,
 		attrTimeout:           attrTimeout,
 		entryTimeout:          entryTimeout,
+		maxBackground:         cfg.MaxConcurrency,
 	}, nil
 }
 
@@ -196,6 +197,7 @@ type filesystem struct {
 	prefetchSize          int64
 	noprefetch            bool
 	noBackgroundFetch     bool
+	maxBackground         int64
 	debug                 bool
 	layer                 map[string]layer.Layer
 	layerMu               sync.Mutex
@@ -345,7 +347,7 @@ func (fs *filesystem) Mount(ctx context.Context, mountpoint string, labels map[s
 		AllowOther:    true,     // allow users other than root&mounter to access fs
 		FsName:        "stargz", // name this filesystem as "stargz"
 		Debug:         fs.debug,
-		MaxBackground: 256,
+		MaxBackground: int(fs.maxBackground),
 	}
 	if isFusermountBinExist() {
 		log.G(ctx).Infof("fusermount detected")
