@@ -472,6 +472,7 @@ func (f *httpFetcher) fetch(ctx context.Context, rs []region, retry bool) (multi
 		req.Header[k] = v
 	}
 	var ranges string
+
 	for _, reg := range requests {
 		ranges += fmt.Sprintf("%d-%d,", reg.b, reg.e)
 	}
@@ -490,7 +491,8 @@ func (f *httpFetcher) fetch(ctx context.Context, rs []region, retry bool) (multi
 		// We are getting the whole blob in one part (= status 200)
 		size, err := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse Content-Length: %w", err)
+			// use super region size as a fallback
+			size = superRegion(s.rs).size()
 		}
 		return newSinglePartReader(region{0, size - 1}, res.Body), nil
 	} else if res.StatusCode == http.StatusPartialContent {
